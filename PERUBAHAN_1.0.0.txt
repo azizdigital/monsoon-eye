@@ -1,0 +1,16 @@
+Monsoon EYE 1.0.0 (22 Nov 2026) — Flood & Weather Monitoring
+
+App baru, dipecahkan daripada Dashboard Cuaca Aziz 4.6.0 (bahagian darat). App asal tidak diubah.
+- Nama, logo, ikon & warna sendiri (gelap: biru + oren matahari). BM lalai, boleh tukar EN.
+- Kotak jawapan di atas dashboard: skor risiko banjir 24 j + ayat mudah (ikut paras sungai paling teruk) + 3 fakta.
+- 4 nombor utama; paras sungai sebagai bar hulu → hilir (Normal → Bahaya).
+- Menu berlabel: Utama, Sungai, Hujan, Aliran, Laman, Dinding, Tanya AI, Sejarah, Alert, Tetapan. Senarai laman tidak lagi penuh di tepi skrin.
+- 23 laman darat sahaja; amaran MET darat sahaja (amaran laut ke OceanWATCH).
+- Tanya AI: 8 tujuan (bersedia/pindah, sungai naik/turun, lepas banjir, beg kecemasan, perjalanan, aktiviti luar, WhatsApp, tinjauan 7 hari),
+  setiap satu dengan panduan app sendiri (tanpa AI) + prompt (Ringkas/Penuh, BM/EN).
+- Tambah daerah (Tetapan): 6 langkah dengan contoh Kemaman, semak pautan salah (daerah/negeri lain, pautan hujan vs paras air,
+  stesen tidak aktif, kod MET salah, koordinat), susunan sungai, sel GloFAS; halaman Sungai/Hujan/Aliran untuk daerah itu.
+- Mirror JPS sendiri (cawangan data repo ini) + mirror/districts.json untuk daerah lain.
+- Relay Cloudflare sendiri (skrip dalam Tetapan, GH_REPO lalai azizdigital/monsoon-eye).
+- Import tetapan dari Dashboard Cuaca (profil darat, Tempat saya, susunan sungai, kunci relay).
+- Tempat simpan & cache luar talian sendiri (tidak bertindih dengan Dashboard Cuaca / OceanWATCH di alamat yang sama).

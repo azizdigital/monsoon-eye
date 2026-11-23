@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ms" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kemaman - Paras Air & Hujan</title>
+<script src="assets/js/edition.js"></script>
+<script>try{var t=localStorage.getItem('mc_theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="assets/css/kemaman.css">
+<link rel="stylesheet" href="assets/css/edition.css">
+</head>
+<body class="km">
+<!-- Water level & rainfall of Daerah Kemaman for the iPad / phone / web app: the tabs "Water Level Kemaman" (?tab=water) and
+     "Rainfall Kemaman" (?tab=rain). Data: the GitHub mirror (folder kemaman/ of the branch "data"), JPS Public Infobanjir 5-minute
+     readings, every ~15 minutes; 5-model rain forecast from Open-Meteo. The dashboard cards are not changed by this page. -->
+<div id="km" class="km-root"><div class="km-loading">Memuatkan data JPS Kemaman…</div></div>
+<div id="kmSheet" class="km-sheet" hidden></div>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/mirror-parse.js"></script>
+<script src="assets/js/core.js"></script>
+<script src="assets/js/risk.js"></script>
+<script src="assets/js/advisor.js"></script>
+<script src="assets/vendor/leaflet/leaflet.js"></script>
+<script src="assets/js/kemaman-geo.js"></script>
+<script src="assets/js/kemaman-art.js"></script>
+<script src="assets/js/kemaman.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "monsoon-eye",
+  "productName": "Monsoon EYE",
+  "version": "1.0.0",
+  "description": "Monsoon EYE - Flood & Weather Monitoring (Kemaman and other districts): JPS river levels & rain, flood risk, early flood warning, GloFAS river flow, Ask AI. Web app for iPad / phone (GitHub Pages).",
+  "author": "Aziz Mohamad",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "serve": "node tools/serve.js 42050",
+    "build-www": "node tools/build-precache.js",
+    "test:unit": "node tests/unit.js && node tests/edition.js && node tests/mirror.js",
+    "test": "node tools/build-precache.js && node tests/unit.js && node tests/edition.js && node tests/mirror.js && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1"
+  }
+}

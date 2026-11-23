@@ -1,0 +1,43 @@
+# Monsoon EYE - mirror of JPS water level & rainfall (5-minute readings of Kemaman and the districts in mirror/districts.json)
+# and the Cukai tide table, about every 15 minutes. The JSON files go to the branch "data" (one commit, so the repo stays small).
+# GitHub's free schedule is often late or skipped: the app reads JPS live through its relay too, and the relay can ask GitHub to run
+# this workflow after each live read (secret GH_TOKEN in Cloudflare, see README).
+name: Mirror data (JPS & tides)
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['mirror/**', '.github/workflows/mirror.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Read the sources
+        run: node mirror/mirror.js out
+        env:
+          JPS_STATES: ${{ vars.JPS_STATES }}
+      - name: Publish to branch "data"
+        run: |
+          cd out
+          git init -q -b data
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Data $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" data
