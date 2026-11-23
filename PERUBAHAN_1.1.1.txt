@@ -1,0 +1,10 @@
+Monsoon EYE 1.1.1
+=================
+Kunci relay: anda taip sendiri
+- Butang "Buat kunci baru" dibuang; app tidak lagi membuat / menukar kunci relay sendiri.
+- Taip kunci di Tetapan › Relay laman (8-64 aksara: huruf, nombor, - _ . ~), Simpan. Kunci sama dengan Dashboard Cuaca
+  = relay Dashboard Cuaca boleh dikongsi (isi alamat relay yang sama).
+- Kunci salah (cth ada @ atau jarak): mesej jelas, kunci lama kekal, skrip tidak disalin.
+Laman
+- Butang Laman sentiasa buka senarai laman; laman yang hanya boleh dibuka melalui relay (JPS, infobanjir, MET,
+  pasang surut) dibuka di tab baru bila relay belum dipasang.

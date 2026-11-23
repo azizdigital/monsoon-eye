@@ -6,7 +6,7 @@ Dipecahkan daripada *Dashboard Cuaca Aziz* 4.6.0 (bahagian darat). App offshore:
 
 - Pautan: **https://azizdigital.github.io/monsoon-eye/**
 - iPad: buka pautan dalam Safari → Kongsi → **Tambah ke Skrin Utama**.
-- Versi: lihat `www/assets/js/edition.js` / Tetapan › Lain-lain. Perubahan: `PERUBAHAN_1.1.0.txt`, `PERUBAHAN_1.0.0.txt`. Panduan pengguna: `PANDUAN.md`.
+- Versi: lihat `www/assets/js/edition.js` / Tetapan › Lain-lain. Perubahan: `PERUBAHAN_1.1.1.txt`, `PERUBAHAN_1.1.0.txt`, `PERUBAHAN_1.0.0.txt`. Panduan pengguna: `PANDUAN.md`.
 
 ## App PC (Windows)
 App PC penuh seperti app PC Dashboard Cuaca: pelayan tempatan, pengumpul data & alert di latar belakang (juga bila tetingkap ditutup ke tray), notifikasi Windows, laman web dalam app + penyekat iklan, PDF, mula dengan Windows.
@@ -21,7 +21,7 @@ Perlu **Node.js 22 LTS** (nodejs.org). Dalam folder repo (yang ada `package.json
 npm install
 npm run dist
 ```
-Hasil dalam `dist\`: **Monsoon EYE Setup 1.1.0.exe** (pasang) dan **Monsoon EYE 1.1.0.exe** (portable). Cuba tanpa bina: `npm start`.
+Hasil dalam `dist\`: **Monsoon EYE Setup 1.1.1.exe** (pasang) dan **Monsoon EYE 1.1.1.exe** (portable). Cuba tanpa bina: `npm start`.
 Jika `npm install` gagal: pastikan anda dalam folder yang betul (`dir package.json`), padam folder `node_modules`, cuba sekali lagi; jika masih gagal, salin baris `npm error` yang pertama.
 
 ## Sumber data (percuma, tanpa kunci API)
@@ -33,7 +33,7 @@ Open-Meteo (cuaca, 5 model hujan, laut, GloFAS) · MET Malaysia melalui api.data
    - Negeri lain: repo › Settings › Secrets and variables › Actions › **Variables** › `JPS_STATES` = `TRG,PHG` (contoh).
    - Daerah dengan salinan 30 hari: tambah baris dari app (Tetapan › Tambah daerah › *Salin config mirror*) ke `mirror/districts.json`, contoh:
      `[{"id":"dungun","state":"TRG","district":"Dungun","gids":["4832011_","27207"]}]`
-3. **Relay Cloudflare** (baru, khas Monsoon EYE): dash.cloudflare.com › Workers & Pages › Create › Hello World › nama `monsoon-eye-relay` › Deploy. Dalam app: Tetapan › Relay laman › **Salin skrip relay** → Cloudflare *Edit code* → tampal → Deploy. Isi alamat worker + kunci dalam app → **Uji relay**.
+3. **Relay Cloudflare:** relay Dashboard Cuaca yang sedia ada boleh dikongsi — Tetapan › Relay laman › isi **alamat relay** yang sama + taip **kunci relay** yang sama (kunci anda sendiri: 8-64 aksara, huruf, nombor, `- _ . ~`) › Simpan › Uji relay. Relay baru khas Monsoon EYE (pilihan, untuk sandaran GitHub segar): dash.cloudflare.com › Workers & Pages › Create › Hello World › nama `monsoon-eye-relay` › Deploy; dalam app taip kunci › Simpan › **Salin skrip relay** → Cloudflare *Edit code* → padam semua → tampal → **Deploy** → Uji relay.
 4. **Sandaran GitHub melalui relay** (jadual GitHub percuma selalu lewat): token GitHub *fine-grained* (repo `monsoon-eye` sahaja, **Actions: Read and write**) → Cloudflare › worker › Settings › Variables and Secrets › Secret `GH_TOKEN`. Pilihan: `GH_REPO` (lalai `azizdigital/monsoon-eye`).
 
 ## Struktur
