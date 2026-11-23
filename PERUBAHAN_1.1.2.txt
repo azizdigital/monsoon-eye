@@ -1,0 +1,6 @@
+Monsoon EYE 1.1.2
+=================
+Pembetulan: app web tidak terbuka selepas kemas kini 1.1.1
+- Peranti memuatkan halaman baru dengan skrip lama yang tersimpan, lalu app berhenti. Kini setiap fail app diambil dari
+  internet dahulu (sehingga 4 saat); salinan dalam peranti hanya bila luar talian atau lambat.
+- Butang lama disimpan tersembunyi supaya peranti dengan skrip 1.1.0 boleh dibuka sekali untuk dapat versi baru.

@@ -1,7 +1,7 @@
 {
   "name": "monsoon-eye",
   "productName": "Monsoon EYE",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Monsoon EYE - Flood & Weather Monitoring: JPS river levels & rain, flood risk, early flood warning, GloFAS river flow, Ask AI. PC app (Windows) + web app for iPad / phone (GitHub Pages).",
   "main": "main.js",
   "author": "Aziz Mohamad",
