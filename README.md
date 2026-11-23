@@ -1,12 +1,28 @@
 # Monsoon EYE — Flood & Weather Monitoring
 
-App web (iPad / telefon / pelayar) untuk pantau **banjir & cuaca di darat**: paras sungai JPS setiap 5 minit, hujan stesen & 5 model, skor risiko banjir, amaran awal banjir, aliran sungai GloFAS 30 hari, amaran MET (darat), pasang surut, dan **Tanya AI** (panduan app sendiri + prompt untuk ChatGPT / Claude / Gemini / Copilot). Daerah pertama: **Kemaman**; daerah lain boleh ditambah dalam Tetapan.
+App PC (Windows) dan app web (iPad / telefon / pelayar) untuk pantau **banjir & cuaca di darat**: paras sungai JPS setiap 5 minit, hujan stesen & 5 model, skor risiko banjir, amaran awal banjir, aliran sungai GloFAS 30 hari, amaran MET (darat), pasang surut, dan **Tanya AI** (panduan app sendiri + prompt untuk ChatGPT / Claude / Gemini / Copilot). Daerah pertama: **Kemaman**; daerah lain boleh ditambah dalam Tetapan.
 
 Dipecahkan daripada *Dashboard Cuaca Aziz* 4.6.0 (bahagian darat). App offshore: **Sentinel OceanWATCH** (repo `oceanwatch`). App asal `dashboard-cuaca` tidak diubah.
 
 - Pautan: **https://azizdigital.github.io/monsoon-eye/**
 - iPad: buka pautan dalam Safari → Kongsi → **Tambah ke Skrin Utama**.
-- Versi: lihat `www/assets/js/edition.js` / Tetapan › Lain-lain. Perubahan: `PERUBAHAN_1.0.0.txt`. Panduan pengguna: `PANDUAN.md`.
+- Versi: lihat `www/assets/js/edition.js` / Tetapan › Lain-lain. Perubahan: `PERUBAHAN_1.1.0.txt`, `PERUBAHAN_1.0.0.txt`. Panduan pengguna: `PANDUAN.md`.
+
+## App PC (Windows)
+App PC penuh seperti app PC Dashboard Cuaca: pelayan tempatan, pengumpul data & alert di latar belakang (juga bila tetingkap ditutup ke tray), notifikasi Windows, laman web dalam app + penyekat iklan, PDF, mula dengan Windows.
+- **JPS terus dari PC:** paras air & hujan negeri profil dibaca terus dari JPS Public Infobanjir (mana-mana negeri, tanpa relay); salinan GitHub hanya bila JPS tak jawab. Borang *Tambah daerah* pun baca jadual JPS & semak kod MET melalui PC.
+- **Jalan serentak** dengan Dashboard Cuaca (port 30040) dan Sentinel OceanWATCH (30060): port sendiri **30050**, folder data sendiri `%APPDATA%\Monsoon EYE`, ikon & tray sendiri.
+- **Import tetapan:** Tetapan › Import dari Dashboard Cuaca — dibaca terus dari app PC Dashboard Cuaca (`%APPDATA%\Dashboard Cuaca Aziz\config.json`).
+- Tiada akses telefon / QR — iPad & telefon guna app web (pautan di atas).
+
+### Bina .exe (di PC Windows)
+Perlu **Node.js 22 LTS** (nodejs.org). Dalam folder repo (yang ada `package.json`):
+```
+npm install
+npm run dist
+```
+Hasil dalam `dist\`: **Monsoon EYE Setup 1.1.0.exe** (pasang) dan **Monsoon EYE 1.1.0.exe** (portable). Cuba tanpa bina: `npm start`.
+Jika `npm install` gagal: pastikan anda dalam folder yang betul (`dir package.json`), padam folder `node_modules`, cuba sekali lagi; jika masih gagal, salin baris `npm error` yang pertama.
 
 ## Sumber data (percuma, tanpa kunci API)
 Open-Meteo (cuaca, 5 model hujan, laut, GloFAS) · MET Malaysia melalui api.data.gov.my · JPS Public Infobanjir (melalui mirror GitHub & relay sendiri) · Tide Forecast (Cukai) · OpenStreetMap.
@@ -22,7 +38,10 @@ Open-Meteo (cuaca, 5 model hujan, laut, GloFAS) · MET Malaysia melalui api.data
 
 ## Struktur
 ```
-www/                     app web (GitHub Pages)
+main.js, preload.js      app PC (Electron) — edition.json beritahu app mana
+lib/                     pelayan tempatan, pengumpul data, alert, penyekat iklan (app PC)
+build/                   ikon .exe
+www/                     app web (GitHub Pages) — juga dipapar oleh app PC
   index.html             dashboard, Laman, Dinding, Tanya AI, Sejarah, Alert, Tetapan
   kemaman.html           halaman Sungai / Hujan / Aliran (?tab=water|rain|flow) — Kemaman atau daerah yang ditambah
   assets/js/edition.js   app ini (dibuat oleh tools/build-edition.js — jangan ubah sendiri)
@@ -34,7 +53,7 @@ www/                     app web (GitHub Pages)
   assets/js/risk.js, advisor.js, kemaman*.js, mirror-parse.js, charts*.js, i18n.js
   relay-worker.js        skrip relay Cloudflare
 mirror/                  mirror JPS & pasang surut (GitHub Actions) + districts.json
-tests/                   unit.js, edition.js, mirror.js (Node), web.spec.js (Playwright, tanpa internet)
+tests/                   pc.js (app PC sebenar, `npm run test:pc`), unit.js, edition.js, mirror.js (Node), web.spec.js (Playwright, tanpa internet)
 tools/                   serve.js (pelayan tempatan), build-precache.js, build-edition.js
 ```
 

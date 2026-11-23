@@ -1,18 +1,74 @@
 {
   "name": "monsoon-eye",
   "productName": "Monsoon EYE",
-  "version": "1.0.0",
-  "description": "Monsoon EYE - Flood & Weather Monitoring (Kemaman and other districts): JPS river levels & rain, flood risk, early flood warning, GloFAS river flow, Ask AI. Web app for iPad / phone (GitHub Pages).",
+  "version": "1.1.0",
+  "description": "Monsoon EYE - Flood & Weather Monitoring: JPS river levels & rain, flood risk, early flood warning, GloFAS river flow, Ask AI. PC app (Windows) + web app for iPad / phone (GitHub Pages).",
+  "main": "main.js",
   "author": "Aziz Mohamad",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "start": "electron .",
     "serve": "node tools/serve.js 42050",
     "build-www": "node tools/build-precache.js",
     "test:unit": "node tests/unit.js && node tests/edition.js && node tests/mirror.js",
-    "test": "node tools/build-precache.js && node tests/unit.js && node tests/edition.js && node tests/mirror.js && playwright test"
+    "test": "node tools/build-precache.js && node tests/unit.js && node tests/edition.js && node tests/mirror.js && playwright test",
+    "test:pc": "node tests/pc.js",
+    "dist": "node tools/build-precache.js && electron-builder --win portable nsis --x64",
+    "dist:portable": "node tools/build-precache.js && electron-builder --win portable --x64",
+    "dist:setup": "node tools/build-precache.js && electron-builder --win nsis --x64",
+    "adblock:build": "node tools/build-adblock.js"
   },
   "devDependencies": {
-    "@playwright/test": "1.65.1"
+    "@playwright/test": "1.65.1",
+    "electron": "45.3.3",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "local.monsooneye.aziz",
+    "productName": "Monsoon EYE",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "edition.json",
+      "lib/**",
+      "www/**",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/@ghostery/adblocker-electron-preload/dist/index.cjs"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "Monsoon EYE ${version}.exe",
+      "unpackDirName": "MonsoonEYE"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Monsoon EYE",
+      "artifactName": "Monsoon EYE Setup ${version}.exe",
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "2.20.3"
   }
 }

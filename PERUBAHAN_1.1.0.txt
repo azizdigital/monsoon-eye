@@ -1,0 +1,15 @@
+Monsoon EYE 1.1.0 — App PC (Windows)
+=====================================
+Baru
+- App PC penuh (Electron), sama seperti app PC Dashboard Cuaca: pelayan tempatan, pengumpul data & alert
+  di latar belakang, tray, notifikasi Windows, laman web dalam app + penyekat iklan, PDF, mula dengan Windows.
+- Jalan serentak dengan Dashboard Cuaca dan Sentinel OceanWATCH: port 30050, folder data
+  %APPDATA%\Monsoon EYE, ID Windows sendiri (local.monsooneye.aziz), ikon & tray sendiri.
+- JPS dibaca terus oleh PC (paras air + hujan negeri profil, mana-mana negeri, tanpa relay);
+  salinan GitHub hanya bila JPS tidak menjawab.
+- Tambah daerah di PC: jadual JPS, kod MET (data.gov.my) dan sel sungai GloFAS dibaca melalui PC;
+  daerah disimpan dalam config.json PC.
+- Import tetapan: dibaca terus dari app PC Dashboard Cuaca (%APPDATA%\Dashboard Cuaca Aziz\config.json).
+- Bina: npm install -> npm run dist (Setup + Portable). Ujian app PC: npm run test:pc.
+Tiada
+- Akses telefon / QR / HTTPS (iPad & telefon guna app web).

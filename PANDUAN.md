@@ -5,6 +5,13 @@
 2. Tekan butang **Kongsi ⬆️ → Tambah ke Skrin Utama**. Ikon awan + matahari keluar di skrin utama.
 3. Buka dari ikon itu. Kali pertama: **Tetapan › Import dari Dashboard Cuaca** (jika app asal pernah dibuka di iPad yang sama) untuk salin profil, Tempat saya, susunan sungai & kunci relay.
 
+## Pasang di PC (Windows)
+1. Pasang **Node.js 22 LTS** (nodejs.org) jika belum ada.
+2. Ekstrak zip, buka folder yang ada `package.json`, klik bar alamat, taip `cmd`, Enter.
+3. `npm install` → `npm run dist`. Dalam folder `dist` ada **Monsoon EYE Setup 1.1.0.exe** (pasang) dan **Monsoon EYE 1.1.0.exe** (portable).
+4. Buka app → **Tetapan › Import dari Dashboard Cuaca** — profil & tetapan dibaca terus dari app PC Dashboard Cuaca.
+5. Boleh buka serentak dengan Dashboard Cuaca dan app satu lagi (port 30050, folder data `%APPDATA%\Monsoon EYE`). Pilih **Kekal di tray** dalam Tetapan supaya alert terus berbunyi bila tetingkap ditutup.
+
 ## Menu (kiri; di telefon di bawah)
 | Menu | Isi |
 |---|---|

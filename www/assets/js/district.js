@@ -42,19 +42,23 @@
   }
 
   /* ------------------------------------------------------------ JPS tables: GitHub copy (states in districts.json) or the relay */
-  function relayOk() { return C.relayReady(state.settings); }
+  /* PC app: the PC reads JPS itself (no relay); the web app needs the relay */
+  var PC = function () { return MC.state.mode === 'pc'; };
+  function relayOk() { return PC() || C.relayReady(state.settings); }
+  function jsonGet(url, ms) { return PC() ? MC.pcGet(url, ms) : MC.fetchT(url, ms).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
+  function textGet(url, ms) { return PC() ? MC.pcGet(url, ms).then(function (j) { return j.text || ''; }) : MC.fetchT(C.relayUrlFor(url, state.settings), ms).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }); }
   function stateTable(st) {
     if (tables[st]) return Promise.resolve(tables[st]);
-    var mirror = MC.fetchT(MC.MIRROR + 'jps-' + st + '.json?m=' + Math.floor(Date.now() / 600000), 20000).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    var mirror = jsonGet(MC.MIRROR + 'jps-' + st + '.json?m=' + Math.floor(Date.now() / 600000), 20000)
       .then(function (j) { if (!j.water || !j.water.length) throw new Error('empty'); return { water: j.water, rain: (j.rain && j.rain.stations) || [], src: 'mirror', at: j.waterAt }; });
     var live = function () {
       if (!relayOk()) throw new Error(T('negeri ini belum ada salinan GitHub dan relay belum dipasang', 'this state has no GitHub copy and the relay is not set up'));
       var s2 = Object.assign({}, state.settings, { jpsState: st, scrapeInfobanjir: true, waterDistrict: 'x' }), u = C.jpsUrls(s2);
-      var get = function (url) { return MC.fetchT(C.relayUrlFor(url, state.settings), 45000).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }); };
+      var get = function (url) { return textGet(url, 45000); };
       return Promise.all([get(u.jpsWater), get(u.jpsRain).catch(function () { return ''; })]).then(function (x) {
         var w = window.MCParse.jpsWater(x[0]), r = x[1] ? window.MCParse.jpsRain(x[1]) : { stations: [] };
         if (!w.length) throw new Error(T('jadual JPS kosong', 'JPS table empty'));
-        return { water: w, rain: r.stations || [], src: 'relay', at: new Date().toISOString() };
+        return { water: w, rain: r.stations || [], src: PC() ? 'pc' : 'relay', at: new Date().toISOString() };
       });
     };
     return mirror.catch(live).then(function (t) { tables[st] = t; return t; });
@@ -150,7 +154,7 @@
     var code = String(D.met || '').trim();
     if (!code) { D.msgs.met = [M('warn', T('Tiada kod MET — ramalan MET harian tidak dipapar (amaran tetap dibaca ikut kata kunci).', 'No MET code — no daily MET forecast (warnings still read by keywords).'))]; render(); return; }
     if (!/^Ds\d{3}$/i.test(code)) { D.msgs.met = [M('bad', T('Kod MET daerah berbentuk Ds + 3 nombor (cth Ds065).', 'A MET district code is Ds + 3 digits (e.g. Ds065).'))]; render(); return; }
-    MC.fetchT('https://api.data.gov.my/weather/forecast?contains=' + encodeURIComponent(code) + '@location__location_id&limit=1', 20000).then(function (r) { return r.json(); }).then(function (j) {
+    jsonGet('https://api.data.gov.my/weather/forecast?contains=' + encodeURIComponent(code) + '@location__location_id&limit=1', 20000).then(function (j) {
       var x = Array.isArray(j) ? j[0] : null, nm = x && x.location ? x.location.location_name : '';
       if (!nm) D.msgs.met = [M('bad', T('Kod {c} tidak dijumpai di data.gov.my.', 'Code {c} not found on data.gov.my.').replace('{c}', code))];
       else if (D.name && nm.toLowerCase().indexOf(D.name.toLowerCase()) < 0 && D.name.toLowerCase().indexOf(nm.toLowerCase()) < 0) D.msgs.met = [M('bad', T('Kod {c} ialah "{n}", bukan {d}. Kod salah?', 'Code {c} is "{n}", not {d}. Wrong code?').replace('{c}', code).replace('{n}', nm).replace('{d}', D.name))];
@@ -160,7 +164,7 @@
   }
   function findMet() {
     if (!D.name) return;
-    MC.fetchT('https://api.data.gov.my/weather/forecast?contains=' + encodeURIComponent(D.name) + '@location__location_name&limit=20', 20000).then(function (r) { return r.json(); }).then(function (j) {
+    jsonGet('https://api.data.gov.my/weather/forecast?contains=' + encodeURIComponent(D.name) + '@location__location_name&limit=20', 20000).then(function (j) {
       var ds = (Array.isArray(j) ? j : []).map(function (x) { return x.location; }).filter(function (l) { return l && /^Ds/.test(l.location_id); });
       if (!ds.length) { D.msgs.met = [M('warn', T('Tiada kod daerah MET untuk "{d}". Cari di met.gov.my (lihat panduan).', 'No MET district code for "{d}". Look it up on met.gov.my (see the guide).').replace('{d}', D.name))]; render(); return; }
       D.met = ds[0].location_id; checkMet();
@@ -308,9 +312,17 @@
       waterDistrict: D.name, jpsState: D.state, scrapeInfobanjir: true, useDataGovFlood: false, coastal: !!D.coastal, tidePlace: 'model', ewUpstream: cfg.upstream, district: JSON.stringify(cfg) };
     var P2 = { active: state.profiles.active, profiles: state.profiles.profiles.slice() }, i = P2.profiles.map(function (p) { return p.id; }).indexOf(prof.id);
     var clean = C.cleanProfile(prof, i >= 0 ? P2.profiles[i] : null);
+    var name = D.name;
+    if (PC()) {   /* PC app: profiles live in the PC's config.json */
+      MC.Data.profile('save', { profile: clean }).then(function () {
+        D = null; render();
+        if (confirm(T('Daerah {n} disimpan ✓. Tukar ke daerah ini sekarang?', 'District {n} saved ✓. Switch to it now?').replace('{n}', name))) MC.switchProfile(clean.id);
+      }, function (e) { MC.toast(T('Tidak dapat simpan', 'Could not save'), e.message, 'warning'); });
+      return;
+    }
     if (i >= 0) P2.profiles[i] = clean; else P2.profiles.push(clean);
     MC.setProfiles(P2);
-    var name = D.name; D = null; render();
+    D = null; render();
     if (confirm(T('Daerah {n} disimpan ✓. Tukar ke daerah ini sekarang?', 'District {n} saved ✓. Switch to it now?').replace('{n}', name))) MC.switchProfile(clean.id);
   }
   function editExisting(pid) {

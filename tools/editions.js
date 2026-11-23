@@ -5,7 +5,12 @@ module.exports = {
     "id": "monsoon-eye",
     "short": "me",
     "kind": "land",
-    "version": "1.0.0",
+    "version": "1.1.0",
+    "pc": {
+      "port": 30050,
+      "appId": "local.monsooneye.aziz",
+      "exe": "Monsoon EYE"
+    },
     "name": "Monsoon EYE",
     "nameHtml": "Monsoon<em>EYE</em>",
     "tagline": "Flood & Weather Monitoring",
