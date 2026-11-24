@@ -5,7 +5,7 @@ module.exports = {
     "id": "monsoon-eye",
     "short": "me",
     "kind": "land",
-    "version": "1.1.2",
+    "version": "1.1.3",
     "pc": {
       "port": 30050,
       "appId": "local.monsooneye.aziz",

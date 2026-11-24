@@ -1,0 +1,6 @@
+Monsoon EYE 1.1.3
+=================
+Skrip relay v5 (Tetapan › Relay › Salin skrip relay - sama dalam ketiga-tiga app)
+- Skrip relay kini sama dengan Dashboard Cuaca & Sentinel OceanWATCH (v5). Ia menambah alamat /KEY/ais untuk kedudukan
+  kapal (aisstream.io) yang dipakai OceanWATCH; kunci aisstream disimpan sebagai rahsia AIS_KEY di Cloudflare, bukan dalam app.
+- Tiada perubahan lain untuk Monsoon EYE. Kalau anda tampal skrip dari app ini, relay kekal v5 (tidak turun ke v4).
