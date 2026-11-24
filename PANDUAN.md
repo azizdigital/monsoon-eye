@@ -8,7 +8,7 @@
 ## Pasang di PC (Windows)
 1. Pasang **Node.js 22 LTS** (nodejs.org) jika belum ada.
 2. Ekstrak zip, buka folder yang ada `package.json`, klik bar alamat, taip `cmd`, Enter.
-3. `npm install` → `npm run dist`. Dalam folder `dist` ada **Monsoon EYE Setup 1.1.3.exe** (pasang) dan **Monsoon EYE 1.1.3.exe** (portable).
+3. `npm install` → `npm run dist`. Dalam folder `dist` ada **Monsoon EYE Setup 1.1.4.exe** (pasang) dan **Monsoon EYE 1.1.4.exe** (portable).
 4. Buka app → **Tetapan › Import dari Dashboard Cuaca** — profil & tetapan dibaca terus dari app PC Dashboard Cuaca.
 5. Boleh buka serentak dengan Dashboard Cuaca dan app satu lagi (port 30050, folder data `%APPDATA%\Monsoon EYE`). Pilih **Kekal di tray** dalam Tetapan supaya alert terus berbunyi bila tetingkap ditutup.
 
@@ -48,6 +48,16 @@ App memberi amaran bila: stesen dalam **daerah / negeri lain** (contoh stesen Se
 
 ## Relay (Tetapan › Relay laman)
 Relay Cloudflare percuma khas Monsoon EYE: baca JPS terus setiap 3 minit, buka laman yang menolak paparan dalam app, buang iklan. Langkah ada dalam Tetapan dan README.
+
+**Salinan GitHub setiap jam walaupun app tertutup (relay v6, 1.1.4).** Jadual GitHub sendiri selalu lewat (24 Nov: dua kali sehari sahaja), jadi relay boleh picu salinan JPS setiap jam untuk monsoon-eye dan dashboard-cuaca:
+1. GitHub › Settings › Developer settings › Fine-grained tokens › Generate: Repository access = **Only select repositories** → `monsoon-eye` dan `dashboard-cuaca`; Permissions › Repository › **Actions: Read and write**. Salin token (awak sendiri, jangan hantar ke sesiapa).
+2. Cloudflare › Workers › relay › **Settings › Variables and Secrets** › Add › Type **Secret**, nama `GH_TOKEN`, tampal token › Deploy.
+3. **Settings › Trigger events** (Cron Triggers) › Add › `0 * * * *` (setiap jam) › Add.
+
+Bila app dibuka (dengan relay): JPS dibaca terus setiap 3 minit, dan app minta relay kemas kini salinan GitHub paling kerap sekali setiap 10 minit (satu larian GitHub ambil 1–2 minit).
+4. Semak: buka `https://<relay>/<kunci>/mirror` — patut tunjuk `"ok":true`.
+
+**Warna umur data (1.1.4):** titik hijau = bacaan ≤ 30 minit, kuning = sehingga 3 jam, merah = lebih 3 jam.
 
 ## Penting
 Ini alat bantu, bukan amaran rasmi. Ikut arahan APM, NADMA, JPS dan MET Malaysia.

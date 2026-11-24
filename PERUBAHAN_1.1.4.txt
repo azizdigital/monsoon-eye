@@ -1,0 +1,24 @@
+Monsoon EYE 1.1.4
+=================
+Water Level / Rainfall Kemaman tidak lagi pusing
+- Dengan relay, halaman ini dulu tunggu SEMUA bacaan JPS langsung (sehingga 24 bacaan, 30 s setiap satu) sebelum tunjuk apa-apa.
+  Kini salinan GitHub keluar serta-merta; bacaan langsung masuk kemudian ("⟳ Membaca JPS langsung 12/24…"), setiap satu paling lama 12 s.
+- Lencana sumber ikut umur bacaan terbaru: hijau ≤ 30 min, kuning sehingga 3 jam (dengan "X min lalu"), merah lebih 3 jam.
+
+Info Banjir Terengganu
+- infobanjir.terengganu.gov.my hanya jawab sambungan dari Malaysia (relay Cloudflare dapat 522) dan tidak benarkan dipapar dalam app.
+  Kini macam Dashboard Cuaca asal: kad paras air app sendiri, dengan butang "Laman asal ↗" untuk buka laman sebenar (dulu terus tab baru).
+  Sama untuk JPS Aras Air / Peta Infobanjir / MET / pasang surut bila tiada relay.
+
+Data
+- Dashboard: "JPS Public Infobanjir · mirror GitHub X lalu" diwarna ikut umur (hijau / kuning / merah).
+- Stesen yang senyap lebih 3 hari tidak dipapar lagi (2 stesen data.gov.my terakhir lapor Feb 2024, satu siap berlabel "Amaran"
+  kerana ambangnya salah; kedua-duanya salinan stesen JPS yang sama).
+- Amaran MET darat: tahap dan tarikh tamat, cth "Waspada · Terengganu · hingga Jum 27 Nov".
+- Kotak risiko banjir: bila MET beri amaran hujan tetapi 5 model < 20 mm dalam 24 j, ditulis "model mungkin kurang anggar hujan
+  monsun; pantau paras sungai" (skor tidak diubah).
+
+Relay v6 (pilihan)
+- Relay boleh picu salinan GitHub JPS setiap jam sendiri walaupun app tertutup (Cron Trigger) untuk monsoon-eye dan dashboard-cuaca, dengan token GitHub
+  yang awak cipta sendiri (langkah dalam PANDUAN.md › Relay). Semakan 24 Nov: jadual GitHub "setiap 15 minit" jalan 2 kali sehari sahaja.
+  Bila app dibuka: JPS terus setiap 3 minit; salinan GitHub dikemas kini paling kerap setiap 10 minit.

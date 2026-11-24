@@ -316,10 +316,18 @@
       j.water.forEach(function (st) { st.list = pts({ s: st.s, end: j.end, step: j.step }); st.short = shortName(st.name); place(st); if (st.tidal === undefined && R) st.tidal = R.isTidal(rivers, st); });
       j.rain.forEach(place);
       j.endRain = j.end; j.mirrorEnd = j.end;
-      return live(j).then(function () {
+      var done = function () {
         j.rain.forEach(function (st) { st.hourly = (st.h || []).map(function (v, i, a) { return { t: j.endRain - (a.length - 1 - i) * HOUR - HOUR / 2, v: v || 0 }; }); });
         S.data = j; S.err = null; S.at = Date.now();
-      });
+      };
+      /* 1.1.4: the first time, the GitHub copy is shown at once and the live readings (relay) come in afterwards - the page used to
+         wait for all of them (up to 24 readings, 30 s each on a slow line) and only spun. Later refreshes keep the page as it is meanwhile. */
+      if (liveOn() && FOLDER && !S.data) {
+        done(); j.live = { pending: true, ok: 0, n: 0, at: Date.now() };
+        live(j).then(function () { done(); S.liveDone = Date.now(); if (root.MCKemaman && root.MCKemaman.onLive) root.MCKemaman.onLive(); }, function () { j.live = null; });
+        return;
+      }
+      return live(j).then(done);
     }).catch(function (e) { S.err = e.message || String(e); });
   }
 
@@ -329,7 +337,7 @@
   function relayOn() { return !!(C.relayReady && C.relayReady(appSettings()) && root.MCParse && R && R.seriesUrl); }
   function liveOn() { return PC ? !!(root.MCParse && R && R.seriesUrl) : relayOn(); }
   function viaRelay(u) {
-    var ac = root.AbortController ? new AbortController() : null, t = ac ? setTimeout(function () { ac.abort(); }, 30000) : null;
+    var ac = root.AbortController ? new AbortController() : null, t = ac ? setTimeout(function () { ac.abort(); }, 12000) : null;   /* 1.1.4: 12 s each (was 30 s) */
     return fetch(C.relayUrlFor(u, appSettings()), { cache: 'no-store', signal: ac ? ac.signal : undefined }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
       .then(function (x) { clearTimeout(t); return x; }, function (e) { clearTimeout(t); throw e; });
   }
@@ -340,7 +348,7 @@
     return Promise.all(w).then(function () { return out; });
   }
   function live(j) {
-    j.live = null;
+    if (!(j.live && j.live.pending)) j.live = null;
     if (!liveOn()) return Promise.resolve();
     var now = Date.now(), P = root.MCParse;
     /* rain: whole hours on a grid that continues the copy's hours; from an hour boundary at least 1 hour before the copy ends */
@@ -349,9 +357,12 @@
     if (now - from > 26 * HOUR) from = endRain - 26 * HOUR;
     var hours = (now - from) / HOUR + 0.5;   /* a reading before "from": the first rain step */
     var jobs = j.water.filter(function (st) { return st.gid; }).map(function (st) { return ['wl', st]; }).concat(j.rain.filter(function (st) { return st.gid; }).map(function (st) { return ['rf', st]; }));
+    var prog = 0;
+    if (j.live && j.live.pending) j.live.n = jobs.length;
     return pool(jobs, 5, function (x) {
       var u = x[0] === 'wl' ? R.seriesUrl(x[1].gid, now, hours) : R.rainUrl(x[1].gid, now, hours);
-      return (PC ? viaPc(u) : viaRelay(u)).then(function (txt) { return x[0] === 'wl' ? P.wlSeries(txt) : P.rfReadings(txt); });
+      var tick = function () { prog++; var b = $('kmLive'); if (b) b.textContent = '⟳ ' + L('Membaca JPS langsung {n}/{m}…', { n: prog, m: jobs.length }); };
+      return (PC ? viaPc(u) : viaRelay(u)).then(function (txt) { tick(); return x[0] === 'wl' ? P.wlSeries(txt) : P.rfReadings(txt); }, function (e) { tick(); throw e; });
     }).then(function (res) {
       var ok = 0, newest = 0;
       res.forEach(function (pts2, k) {
@@ -433,11 +444,15 @@
   /* ------------------------------------------------------------------ page */
   function head(title, sub) {
     if (S.tab === 'flow') return headFlow(title, sub);
-    var d = S.data, now = Date.now(), lv = d && d.live && d.live.ok ? d.live : null;
+    var d = S.data, now = Date.now(), lv = d && d.live && d.live.ok && !d.live.pending ? d.live : null;
+    var pend = d && d.live && d.live.pending ? '<span class="km-badge wait" id="kmLive">⟳ ' + esc(L('Membaca JPS langsung {n}/{m}…', { n: 0, m: d.live.n || '…' })) + '</span>' : '';
     var newest = lv && lv.newest ? lv.newest : d ? Date.parse(d.at) : null, age = newest ? (now - newest) / MIN : null;
-    var src = lv ? (PC ? L('Langsung (JPS)') : L('Langsung (relay)')) : PC ? L('Mirror GitHub (JPS gagal)') : relayOn() ? L('Mirror GitHub (relay gagal)') : L('Mirror GitHub');
-    var fresh = age === null ? '' : age > 60 ? '<span class="km-badge bad" title="' + esc(src) + '">⚠️ ' + esc(L('Data lama: {m} minit', { m: Math.round(age) })) + ' · ' + esc(src) + '</span>'
+    var src = lv ? (PC ? L('Langsung (JPS)') : L('Langsung (relay)')) : pend ? L('Mirror GitHub') : PC ? L('Mirror GitHub (JPS gagal)') : relayOn() ? L('Mirror GitHub (relay gagal)') : L('Mirror GitHub');
+    /* 1.1.4: the colour says how old the newest reading is: green up to 30 min, amber up to 3 hours, red after */
+    var fresh = age === null ? '' : age > 180 ? '<span class="km-badge bad" title="' + esc(src) + '">⚠️ ' + esc(L('Data lama:')) + ' ' + esc(C.timeAgo(newest, now)) + ' · ' + esc(src) + '</span>'
+      : age > 30 ? '<span class="km-badge warn" title="' + esc(src) + '">● ' + esc(src) + ' · ' + esc(hm(newest)) + ' · ' + esc(C.timeAgo(newest, now)) + '</span>'
       : '<span class="km-badge ok" title="' + esc(src) + '">● ' + esc(src) + ' · ' + esc(hm(newest)) + '</span>';
+    fresh += pend;
     return '<header class="km-head"><div><h1>' + esc(title) + '</h1><p>' + esc(sub) + '</p></div><div class="km-act">' + fresh +
       '<button type="button" class="km-btn force" data-act="refresh" title="' + esc(L('Baca semula semua data sekarang, tanpa cache')) + '">⚡ ' + esc(L('Paksa kemas kini')) + '</button>' +
       '<button type="button" class="km-btn" data-act="pdf">🖨️ ' + esc(L('PDF')) + '</button>' +
@@ -1111,7 +1126,7 @@
     var n = $('kmNote'); if (!n) { n = document.createElement('div'); n.id = 'kmNote'; n.className = 'km-note-pop'; n.setAttribute('role', 'status'); document.body.appendChild(n); }
     n.textContent = text; n.hidden = false; clearTimeout(note.t); if (ms) note.t = setTimeout(function () { n.hidden = true; }, ms);
   }
-  root.MCKemaman = { S: S, refresh: refresh, force: force, idx: idx, pct: pct, intensity: intensity, rainBin: rainBin, shortName: shortName, pts: pts, setTab: function (t) { S.tab = t === 'rain' || t === 'flow' ? t : 'water'; closeSheet(); render(); } };
+  root.MCKemaman = { S: S, onLive: function () { if (S.tab === 'flow') return; var y = root.scrollY; render(); if (S.sel) (S.sel.kind === 'wl' ? openWater : openRain)(S.sel.name); root.scrollTo(0, y); }, refresh: refresh, force: force, idx: idx, pct: pct, intensity: intensity, rainBin: rainBin, shortName: shortName, pts: pts, setTab: function (t) { S.tab = t === 'rain' || t === 'flow' ? t : 'water'; closeSheet(); render(); } };
   window.addEventListener('message', function (e) { if (e.origin !== location.origin || !e.data) return; if (e.data.kmTab) root.MCKemaman.setTab(e.data.kmTab); if (e.data.kmForce) force(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - S.at > 3 * MIN) refresh(); });
   setInterval(function () { refresh(false); }, 3 * MIN);

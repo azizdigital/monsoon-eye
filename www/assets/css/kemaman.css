@@ -23,6 +23,7 @@ body.km.sheet-on { overflow: hidden; }
 .km-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
 .km-badge.ok { background: var(--soft-normal); color: var(--st-normal); }
 .km-badge.bad { background: var(--soft-danger); color: var(--st-danger); }
+.km-badge.warn { background: var(--soft-alert); color: var(--st-alert); } .km-badge.wait { background: var(--soft-info); color: var(--accent, #5aa9ff); }
 
 /* summary strip */
 .km-sum { display: grid; grid-template-columns: repeat(4, minmax(90px, 1fr)) repeat(2, minmax(200px, 2fr)); gap: 10px; }
