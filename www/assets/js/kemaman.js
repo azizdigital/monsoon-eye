@@ -762,19 +762,30 @@
       return '<div class="pd-tc"><span>' + esc(L('{d} hari', { d: x.d })) + '</span><b class="' + x.dir + '">' + ({ up: '↑', down: '↓', flat: '→' })[x.dir] + ' ' + (x.pct > 0 ? '+' : '') + x.pct + '%</b><small>' + esc(x.v + ' m³/s' + (x.of2 !== null ? ' · ' + L('{p}% paras 2 tahun', { p: x.of2 }) : '') + (x.p2 ? ' · ' + L('peluang lepas {p}%', { p: Math.round(x.p2 * 100) }) : '')) + '</small></div>';
     }).join('') || '<p class="muted">' + esc(L('GloFAS tidak dapat dibaca')) + '</p>';
   }
+  /* 1.1.6: the rain table - per place: middle of the models + range, then the lowest and highest model and the confidence */
+  var MSHORT = { ecmwf_ifs025: 'ECMWF', gfs_seamless: 'GFS', icon_seamless: 'ICON', jma_seamless: 'JMA', ukmo_seamless: 'UKMO' };
+  function mm(v) { return v === null || v === undefined ? '-' : f(v, v < 10 ? 1 : 0); }
+  function rainRows(name, sub, ws, sep, first) {
+    var RC = ['r0', 'r1', 'r2', 'r3', 'r4'], sp = function (i) { return i === sep ? ' sep' : ''; };
+    var CF = { high: ['t', L('tinggi')], mid: ['s', L('sederhana')], low: ['r', L('rendah')] };
+    return '<tr' + (first ? '' : ' class="zh"') + '><td class="nm">' + esc(name) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</td>' + ws.map(function (w, i) {
+      return '<td class="' + (w.cls < 0 ? 'now' : RC[w.cls]) + sp(i) + '"><b>' + mm(w.med) + '</b><i>' + (w.lo === null ? '' : esc(mm(w.lo) + '–' + mm(w.hi))) + '</i></td>'; }).join('') + '</tr>' +
+      '<tr class="x"><td class="nm"><span class="pd-lo">↓</span> ' + esc(L('Paling rendah')) + '</td>' + ws.map(function (w, i) { return '<td class="' + sp(i) + '">' + (w.lo === null ? '-' : '<b>' + mm(w.lo) + '</b><i>' + esc(MSHORT[w.loM] || w.loM) + '</i>') + '</td>'; }).join('') + '</tr>' +
+      '<tr class="x"><td class="nm"><span class="pd-hi">↑</span> ' + esc(L('Paling tinggi')) + '</td>' + ws.map(function (w, i) { return '<td class="' + sp(i) + '">' + (w.hi === null ? '-' : '<b>' + mm(w.hi) + '</b><i>' + esc(MSHORT[w.hiM] || w.hiM) + '</i>') + '</td>'; }).join('') + '</tr>' +
+      '<tr class="x"><td class="nm">' + esc(L('Keyakinan')) + '</td>' + ws.map(function (w, i) { var c = CF[w.confLv]; return '<td class="' + sp(i) + '">' + (c ? '<span class="pd-cf ' + c[0] + '">' + w.conf + '%<em>' + esc(c[1]) + '</em></span>' : '-') + '</td>'; }).join('') + '</tr>';
+  }
+  function zoneRain(m, zi, now, hours) { return R.rainWindows(MODELS.map(function (md) { return m[md.id] ? m[md.id][zi] : null; }), now, hours, MODELS.map(function (md) { return md.id; })); }
   function drawPredRain(m) {
     var host = $('kmPredRain'); if (!host) return;
     if (!m) { host.innerHTML = '<p class="muted">' + esc(L('Ramalan model tidak dapat dibaca')) + '</p>'; return; }
-    var now = Date.now(), per = ZONES.map(function (z, zi) { return R.rainWindows(MODELS.map(function (md) { return m[md.id] ? m[md.id][zi] : null; }), now, RAIN_H); });
-    var RC = ['r0', 'r1', 'r2', 'r3', 'r4'];
-    var cell = function (w, i) { return '<td class="' + (w.cls < 0 ? 'now' : RC[w.cls]) + (i === 5 ? ' sep' : '') + '"><b>' + (w.med === null ? '-' : f(w.med, w.med < 10 ? 1 : 0)) + '</b><i>' + (w.lo === null ? '' : esc(f(w.lo, w.lo < 10 ? 1 : 0) + '–' + f(w.hi, w.hi < 10 ? 1 : 0))) + '</i></td>'; };
+    var now = Date.now(), per = ZONES.map(function (z, zi) { return zoneRain(m, zi, now, RAIN_H); });
     var nRow = per[0].map(function (w, i) {
-      var miss = MODELS.filter(function (md) { return m[md.id] && R.rainWindows([m[md.id][0]], now, [w.h])[0].n; }).map(function (md) { return md.name.replace(/^(NOAA |DWD |UK )/, ''); });
-      return '<td class="now' + (i === 5 ? ' sep' : '') + '"><b>' + w.n + '</b>' + (w.n && w.n < MODELS.length ? '<i>' + esc(miss.join(', ')) + '</i>' : '') + '</td>';
+      var got = MODELS.filter(function (md) { return m[md.id] && R.rainWindows([m[md.id][0]], now, [w.h])[0].n; }).map(function (md) { return MSHORT[md.id]; });
+      return '<td class="now' + (i === 5 ? ' sep' : '') + '"><b>' + w.n + '</b>' + (w.n && w.n < MODELS.length ? '<i>' + esc(got.join(', ')) + '</i>' : '') + '</td>';
     }).join('');
-    host.innerHTML = '<table class="pd-t"><thead><tr><th>' + esc(L('Zon')) + '</th>' + RAIN_H.map(function (h, i) { return '<th' + (i === 5 ? ' class="sep"' : '') + '>' + esc(hLabel(h)) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-      per.map(function (ws, zi) { return '<tr><td class="nm">' + esc(L(ZONES[zi].name)) + '</td>' + ws.map(cell).join('') + '</tr>'; }).join('') +
-      '<tr><td class="nm">' + esc(L('Model')) + '<small>' + esc(L('berapa model sampai')) + '</small></td>' + nRow + '</tr></tbody></table>';
+    host.innerHTML = '<table class="pd-t pd-rain"><thead><tr><th>' + esc(L('Zon')) + '</th>' + RAIN_H.map(function (h, i) { return '<th' + (i === 5 ? ' class="sep"' : '') + '>' + esc(hLabel(h)) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      per.map(function (ws, zi) { var nm = L(ZONES[zi].name), mt = /^(.*?) \((.*)\)$/.exec(nm); return rainRows(mt ? mt[1] : nm, mt ? mt[2] : '', ws, 5, zi === 0); }).join('') +
+      '<tr class="zh"><td class="nm">' + esc(L('Model')) + '<small>' + esc(L('berapa model sampai')) + '</small></td>' + nRow + '</tr></tbody></table>';
   }
   function afterPred() {
     var d = S.data;
@@ -1120,7 +1131,10 @@
     if (!m) { host.innerHTML = '<p class="muted">' + esc(L('Ramalan model tidak dapat dibaca')) + '</p>'; return; }
     var lines = [], t1 = end + DAY;
     MODELS.forEach(function (md) { var zz = m[md.id] && m[md.id][z]; if (!zz) return; lines.push({ md: md, pts: zz.filter(function (p) { return p.t >= end && p.t < t1 && p.v !== null; }) }); });
-    var div = document.createElement('div'); div.className = 'km-chart'; host.innerHTML = ''; host.appendChild(div);
+    /* 1.1.6: middle + range, lowest / highest model, confidence for 3 h .. 3 days at this gauge's zone */
+    var SH = [3, 6, 12, 24, 72], tb = document.createElement('div'); tb.className = 'km-scroll';
+    tb.innerHTML = '<table class="pd-t pd-rain"><thead><tr><th></th>' + SH.map(function (h) { return '<th>' + esc(hLabel(h)) + '</th>'; }).join('') + '</tr></thead><tbody>' + rainRows(L('Nilai tengah'), L(ZONES[z].name), zoneRain(m, z, Date.now(), SH), -1, true) + '</tbody></table>';
+    var div = document.createElement('div'); div.className = 'km-chart'; host.innerHTML = ''; host.appendChild(tb); host.appendChild(div);
     chart(div, { t0: end, t1: t1, padR: 14, zoom: false, label: L('Ramalan'), panels: [{ h: 150, auto: true, floor: 0, minSpan: 2, unit: 'mm/j', lines: lines.map(function (l) { return { pts: l.pts.map(function (p) { return { t: p.t + HOUR / 2, v: p.v }; }), color: MCOL[l.md.id], cls: 'mdl', gapMs: 2 * HOUR }; }) }],
       tip: function (t) { return lines.map(function (l) { var v = valueAt(l.pts, t - HOUR / 2); return v === null ? '' : '<i class="sw" style="background:' + MCOL[l.md.id] + '"></i>' + esc(l.md.name) + ': <b>' + f(v, 1) + ' mm</b>'; }).filter(Boolean); } });
     var p = document.createElement('p'); p.className = 'muted';

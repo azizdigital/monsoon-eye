@@ -8,7 +8,7 @@
 ## Pasang di PC (Windows)
 1. Pasang **Node.js 22 LTS** (nodejs.org) jika belum ada.
 2. Ekstrak zip, buka folder yang ada `package.json`, klik bar alamat, taip `cmd`, Enter.
-3. `npm install` → `npm run dist`. Dalam folder `dist` ada **Monsoon EYE Setup 1.1.5.exe** (pasang) dan **Monsoon EYE 1.1.5.exe** (portable).
+3. `npm install` → `npm run dist`. Dalam folder `dist` ada **Monsoon EYE Setup 1.1.6.exe** (pasang) dan **Monsoon EYE 1.1.6.exe** (portable).
 4. Buka app → **Tetapan › Import dari Dashboard Cuaca** — profil & tetapan dibaca terus dari app PC Dashboard Cuaca.
 5. Boleh buka serentak dengan Dashboard Cuaca dan app satu lagi (port 30050, folder data `%APPDATA%\Monsoon EYE`). Pilih **Kekal di tray** dalam Tetapan supaya alert terus berbunyi bila tetingkap ditutup.
 
@@ -53,6 +53,7 @@ Relay Cloudflare percuma khas Monsoon EYE: baca JPS terus setiap 3 minit, buka l
 - **Paras 1 / 3 / 6 / 12 / 24 jam** setiap stesen: kadar 1–4 j terakhir; selepas 4 j kadar beransur ke trend 24 j; kenaikan × faktor hujan 5 model (≥ 30 mm × 1, ≥ 5 mm × 0.75, kurang × 0.5). Ramalan kering: tidak naik, dan tidak turun bawah paras terendah 7 hari. Stesen muara: jadual pasang surut Cukai × nisbah stesen. Warna = tahap JPS; keyakinan = formula amaran awal.
 - **2–14 hari:** paras tidak dianggar — arah aliran sungai GloFAS (% berbanding hari ini, % paras banjir 2 tahun).
 - **Hujan 1 j – 14 hari** ikut 4 zon: nilai tengah 5 model + julat; baris "Model" = berapa model sampai (ICON & UKMO ~7 hari, JMA 11, ECMWF 15, GFS 16).
+- **1.1.6:** bawah setiap zon — ↓ model paling rendah, ↑ model paling tinggi (nilai + nama model) dan **keyakinan** = 60 × % model dalam kelas hujan JPS yang sama dengan nilai tengah + 20 × model ÷ 5 + jarak masa (hingga 24 j 20 · 2–3 hari 15 · 7 hari 10 · 14 hari 5); ≥ 70 tinggi, 40–69 sederhana, < 40 rendah. Sama dalam kad Ramalan dan bila tekan stesen hujan.
 - Tekan stesen: graf 1/3 hari ada garis putus-putus anggaran 24 jam dan julat.
 
 **Salinan GitHub setiap jam walaupun app tertutup (relay v6, 1.1.4).** Jadual GitHub sendiri selalu lewat (24 Nov: dua kali sehari sahaja), jadi relay boleh picu salinan JPS setiap jam untuk monsoon-eye dan dashboard-cuaca:

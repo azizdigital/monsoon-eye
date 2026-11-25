@@ -1,0 +1,12 @@
+Monsoon EYE 1.1.6
+=================
+Ramalan hujan: model paling rendah / paling tinggi dan keyakinan
+
+- Laman Ramalan Kemaman, kad 🔮 Ramalan di Utama dan bila tekan stesen hujan ("Ramalan 5 model di sini"):
+  kotak = nilai tengah 5 model + julat; bawahnya ↓ paling rendah dan ↑ paling tinggi (nilai + nama model) dan keyakinan.
+- Keyakinan (0–100%, diluluskan 25 Nov 2026):
+  60 × bahagian model dalam kelas hujan JPS yang sama dengan nilai tengah
+  + 20 × bilangan model ÷ 5
+  + jarak masa (hingga 24 j 20, 2–3 hari 15, 7 hari 10, 14 hari 5).
+  ≥ 70 tinggi, 40–69 sederhana, < 40 rendah.
+  Contoh 24 j: 8 / 18 / 22 / 30 / 45 mm → 3 daripada 5 dalam kelas sederhana → 36 + 20 + 20 = 76% (tinggi).
