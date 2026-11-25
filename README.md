@@ -6,7 +6,7 @@ Dipecahkan daripada *Dashboard Cuaca Aziz* 4.6.0 (bahagian darat). App offshore:
 
 - Pautan: **https://azizdigital.github.io/monsoon-eye/**
 - iPad: buka pautan dalam Safari → Kongsi → **Tambah ke Skrin Utama**.
-- Versi: lihat `www/assets/js/edition.js` / Tetapan › Lain-lain. Perubahan: `PERUBAHAN_1.1.4.txt`, `PERUBAHAN_1.1.3.txt`, `PERUBAHAN_1.1.2.txt`, `PERUBAHAN_1.1.1.txt`, `PERUBAHAN_1.1.0.txt`, `PERUBAHAN_1.0.0.txt`. Panduan pengguna: `PANDUAN.md`.
+- Versi: lihat `www/assets/js/edition.js` / Tetapan › Lain-lain. Perubahan: `PERUBAHAN_1.1.5.txt`, `PERUBAHAN_1.1.4.txt`, `PERUBAHAN_1.1.3.txt`, `PERUBAHAN_1.1.2.txt`, `PERUBAHAN_1.1.1.txt`, `PERUBAHAN_1.1.0.txt`, `PERUBAHAN_1.0.0.txt`. Panduan pengguna: `PANDUAN.md`.
 
 ## App PC (Windows)
 App PC penuh seperti app PC Dashboard Cuaca: pelayan tempatan, pengumpul data & alert di latar belakang (juga bila tetingkap ditutup ke tray), notifikasi Windows, laman web dalam app + penyekat iklan, PDF, mula dengan Windows.
@@ -21,7 +21,7 @@ Perlu **Node.js 22 LTS** (nodejs.org). Dalam folder repo (yang ada `package.json
 npm install
 npm run dist
 ```
-Hasil dalam `dist\`: **Monsoon EYE Setup 1.1.4.exe** (pasang) dan **Monsoon EYE 1.1.4.exe** (portable). Cuba tanpa bina: `npm start`.
+Hasil dalam `dist\`: **Monsoon EYE Setup 1.1.5.exe** (pasang) dan **Monsoon EYE 1.1.5.exe** (portable). Cuba tanpa bina: `npm start`.
 Jika `npm install` gagal: pastikan anda dalam folder yang betul (`dir package.json`), padam folder `node_modules`, cuba sekali lagi; jika masih gagal, salin baris `npm error` yang pertama.
 
 ## Sumber data (percuma, tanpa kunci API)

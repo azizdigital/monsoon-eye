@@ -186,6 +186,12 @@
           var xa = x(b.t), xb = x(b.t + b.w), bw = Math.max(1, xb - xa - (xb - xa > 4 ? 1.5 : 0.3));
           el('rect', { x: xa, y: y(b.v), width: bw, height: Math.max(0.5, y(lo) - y(b.v)), rx: bw > 6 ? 2 : 0, class: 'kc-bar ' + (b.cls || '') }, g);
         });
+        (p.fans || []).forEach(function (fn) {
+          var up = fn.pts.filter(function (q) { return q.t >= t0 && q.t <= t1; });
+          if (up.length < 2) return;
+          var dd = up.map(function (q, k) { return (k ? 'L' : 'M') + x(q.t).toFixed(1) + ' ' + y(q.hi).toFixed(1); }).join('') + up.slice().reverse().map(function (q) { return 'L' + x(q.t).toFixed(1) + ' ' + y(q.lo).toFixed(1); }).join('') + 'Z';
+          el('path', { d: dd, class: 'kc-fan ' + (fn.cls || '') }, g);
+        });
         (p.lines || []).forEach(function (l) {
           var d = '', open = false, prev = null;
           l.pts.forEach(function (q) {
@@ -265,7 +271,7 @@
 
   /* ------------------------------------------------------------------ state */
   var S = {
-    tab: Q.get('tab') === 'rain' ? 'rain' : Q.get('tab') === 'flow' ? 'flow' : 'water', data: null, err: null, at: 0,
+    tab: Q.get('tab') === 'rain' ? 'rain' : Q.get('tab') === 'flow' ? 'flow' : Q.get('tab') === 'pred' ? 'pred' : 'water', data: null, err: null, at: 0,
     mapMode: load('km_map', 'map'), rainPeriod: load('km_rp', 24), heatSpan: load('km_hs', 24),
     replay: null, frame: null, files: {}, models: null, modelsAt: 0, sel: null, range: 3
   };
@@ -424,7 +430,7 @@
   function loadModels() {
     if (S.models && Date.now() - S.modelsAt < 15 * MIN) return Promise.resolve(S.models);
     var o = load('mc_om', {}); if (o.block && Date.now() < o.block) return Promise.resolve(S.models);
-    var q = 'latitude=' + ZONES.map(function (z) { return z.lat; }).join(',') + '&longitude=' + ZONES.map(function (z) { return z.lon; }).join(',') + '&hourly=precipitation&timezone=Asia%2FKuala_Lumpur&past_days=1&forecast_days=2';
+    var q = 'latitude=' + ZONES.map(function (z) { return z.lat; }).join(',') + '&longitude=' + ZONES.map(function (z) { return z.lon; }).join(',') + '&hourly=precipitation&timezone=Asia%2FKuala_Lumpur&past_days=1&forecast_days=16';   /* 1.1.5: 16 days (Ramalan page, up to 14 days) */
     var out = {};
     return Promise.all(MODELS.map(function (m) {
       var om = 'https://api.open-meteo.com/v1/forecast?' + q + '&models=' + m.id;
@@ -457,18 +463,21 @@
       '<button type="button" class="km-btn force" data-act="refresh" title="' + esc(L('Baca semula semua data sekarang, tanpa cache')) + '">⚡ ' + esc(L('Paksa kemas kini')) + '</button>' +
       '<button type="button" class="km-btn" data-act="pdf">🖨️ ' + esc(L('PDF')) + '</button>' +
       '<button type="button" class="km-btn" data-act="img">🖼️ ' + esc(L('Gambar')) + '</button>' +
-      (PC ? '<button type="button" class="km-btn ln" data-act="orig">🌐 ' + esc(L('Laman asal')) + '</button>' : '<a class="km-btn ln" href="' + ORIG[S.tab] + '" target="_blank" rel="noopener">' + esc(L('Laman asal ↗')) + '</a>') + '</div></header>';
+      (!ORIG[S.tab] ? '' : PC ? '<button type="button" class="km-btn ln" data-act="orig">🌐 ' + esc(L('Laman asal')) + '</button>' : '<a class="km-btn ln" href="' + ORIG[S.tab] + '" target="_blank" rel="noopener">' + esc(L('Laman asal ↗')) + '</a>') + '</div></header>';
   }
   var ORIG = { water: 'https://infobanjir.terengganu.gov.my/WaterLevel/District/4', rain: 'https://infobanjir.terengganu.gov.my/Rainfall/District/4',
     flow: 'https://sites.research.google/floods/l/4.226693947058215/103.41916850003622/13.39981973087496/p/ChIJYVEG9-SGyDERjwlnnLGhe5E?layers=1' };
-  if (DIST) ORIG = { water: 'https://publicinfobanjir.water.gov.my/aras-air/data-paras-air/aras-air-data/?state=' + (DIST.state || 'TRG') + '&district=ALL&station=ALL&lang=en',
+  ORIG.pred = ORIG.flow;
+  if (DIST) ORIG = { pred: null, water: 'https://publicinfobanjir.water.gov.my/aras-air/data-paras-air/aras-air-data/?state=' + (DIST.state || 'TRG') + '&district=ALL&station=ALL&lang=en',
     rain: 'https://publicinfobanjir.water.gov.my/wp-content/themes/shapely/agency/searchresultrainfall.php?state=' + (DIST.state || 'TRG') + '&district=ALL&station=ALL&language=1&loginStatus=0',
     flow: 'https://sites.research.google/floods/l/' + (DIST.river ? DIST.river.lat + '/' + DIST.river.lon : DIST.lat + '/' + DIST.lon) + '/11' };
+  if (DIST) ORIG.pred = ORIG.flow;
   function render() {
     var box = $('km');
     if (S.tab === 'flow') { destroyMap(); renderFlow(box); return; }
     if (!S.data) { box.innerHTML = '<div class="km-loading">' + (S.err ? '⚠️ ' + esc(L('Tidak dapat membaca data mirror: {e}', { e: S.err })) : esc(DIST ? TT('loading') : L('Memuatkan data JPS Kemaman…'))) + '</div>'; return; }
     destroyMap();
+    if (S.tab === 'pred') { destroyMap(); box.innerHTML = predPage(); afterPred(); return; }
     box.innerHTML = S.tab === 'rain' ? rainPage() : waterPage();
     if (S.tab === 'rain') afterRain(); else afterWater();
   }
@@ -679,6 +688,103 @@
     }).join('') + '</section>';
     h += '<p class="km-note">' + esc(L('Sumber: JPS Public Infobanjir (paras air 5 minit): langsung melalui relay awak setiap 3 minit, dengan salinan GitHub (mirror) untuk data lama dan bila relay gagal. Ambang: Waspada = naik ketara, belum banjir · Amaran = kemungkinan kecil akan banjir · Bahaya = banjir. Kedudukan stesen: koordinat JPS, atau kampung / jambatan stesen di sungai dalam OpenStreetMap (anggaran, garis putus-putus). Sungai: © OpenStreetMap.')) + '</p>';
     return h;
+  }
+  /* ------------------------------------------------------------------ Ramalan (1.1.5): water level 1-24 h, river flow 2-14 days, rain 1 h-14 days */
+  function loadTide() {
+    if (DIST || !MIRROR) return Promise.resolve(null);
+    if (S.tide && Date.now() - S.tideAt < 60 * MIN) return Promise.resolve(S.tide);
+    return getJson(MIRROR + 'tide-cukai.json?' + bust()).then(function (j) { S.tide = C.parseTideMirror(j); S.tideAt = Date.now(); return S.tide; }).catch(function () { return S.tide || null; });
+  }
+  var PRED_H = [1, 3, 6, 12, 24], RAIN_H = [1, 3, 6, 12, 24, 48, 72, 168, 336], LVC = ['n', 'a', 'w', 'd'];
+  function hLabel(h) { return h < 48 ? L('{h} j', { h: h }) : L('{d} hari', { d: h / 24 }); }
+  function confWord(c) { return c === null ? '' : c >= 70 ? L('tinggi') : c >= 40 ? L('sederhana') : L('rendah'); }
+  function predPage() {
+    var sub = DIST ? NAME : L('Paras 1–24 jam · aliran sungai & hujan hingga 14 hari');
+    var h = head(DIST ? NAME + ' · ' + L('Ramalan') : L('Ramalan Kemaman'), sub);
+    h += '<section class="km-card"><div class="km-ct"><h2>' + esc(L('Ramalan paras sungai')) + '</h2><span class="muted" id="kmPredLvAt">' + esc(L('anggaran paras (m) dan tahap · tekan stesen untuk graf')) + '</span></div>' +
+      '<div id="kmPredLv" class="km-scroll"><div class="km-loading">' + esc(L('Mengira ramalan…')) + '</div></div>' +
+      '<div class="pd-legend"><span style="--c:var(--st-normal)">' + esc(L('Normal')) + '</span><span style="--c:var(--st-alert)">' + esc(L('Waspada')) + '</span><span style="--c:var(--st-warning)">' + esc(L('Amaran')) + '</span><span style="--c:var(--st-danger)">' + esc(L('Bahaya')) + '</span></div>' +
+      '<h3 class="pd-ttl">' + esc(L('2 – 14 hari: arah aliran sungai (GloFAS, bukan paras)')) + '</h3><div id="kmPredFlow" class="pd-trend"><div class="km-loading">' + esc(L('Membaca GloFAS…')) + '</div></div>' +
+      '<p class="km-note">' + esc(L('1–24 jam: kadar naik/turun 1–4 jam terakhir; selepas 4 jam kadar beransur ke trend 24 jam, dan kenaikan didarab faktor hujan 5 model (≥ 30 mm × 1, ≥ 5 mm × 0.75, kurang × 0.5). Ramalan kering (model < 5 mm/24 j dan hujan hari ini < 10 mm): paras tidak naik, dan tidak turun bawah paras terendah 7 hari. Stesen muara ikut jadual pasang surut Cukai × nisbah stesen. Keyakinan = formula amaran awal. Lebih 24 jam paras tidak dianggar (terlalu tak pasti) — yang ditunjuk ialah arah aliran sungai GloFAS (nilai tengah ahli berbanding hari ini).')) + '</p></section>';
+    h += '<section class="km-card"><div class="km-ct"><h2>' + esc(L('Ramalan hujan')) + '</h2><span class="muted">' + esc(L('jumlah dijangka (mm) · nilai tengah 5 model · julat paling sikit – paling banyak')) + '</span></div>' +
+      '<div id="kmPredRain" class="km-scroll"><div class="km-loading">' + esc(L('Membaca 5 model…')) + '</div></div>' +
+      '<div class="pd-legend"><span style="--c:var(--ink-3)">' + esc(L('< 1 mm')) + '</span><span style="--c:#7cc4ff">' + esc(L('ringan')) + '</span><span style="--c:#5aa9ff">' + esc(L('sederhana')) + '</span><span style="--c:#a78bfa">' + esc(L('lebat')) + '</span><span style="--c:#e879f9">' + esc(L('sangat lebat')) + '</span></div>' +
+      '<p class="km-note">' + esc(L('Kelas hujan JPS (1–10 ringan, 11–30 sederhana, 31–60 lebat, > 60 sangat lebat): pada jumlah hingga 24 jam, pada purata sehari untuk 2–14 hari. Sumber: Open-Meteo — ECMWF IFS (15 hari), NOAA GFS (16), JMA (11), DWD ICON (7.5), UK Met Office (7); lebih 7 hari hanya model yang sampai. 7–14 hari = petunjuk musim, bukan janji.')) + '</p></section>';
+    return '<div class="km-root">' + h + '</div>';
+  }
+  function predLevels(m, tide, files, flow) {
+    var d = S.data, now = Date.now(), from = Math.floor(now / HOUR) * HOUR;
+    var ev = tide && tide.events ? tide.events : null;
+    var g = null;
+    if (flow && flow.H && flow.H.t2 && flow.med && flow.med.length) g = Math.max.apply(null, flow.med.slice(0, 2).map(function (x) { return x.v; })) / flow.H.t2;
+    return d.water.map(function (st, i) {
+      var fl = files && files[i] && files[i].all, all = st.list;
+      if (fl && fl.length) { var lf = st.liveFrom; all = lf ? fl.filter(function (p) { return p.t < lf; }).concat(st.list.filter(function (p) { return p.t >= lf; })) : fl; st.full = all; }
+      return fcFor(st, all, m, ev, g, now, from);
+    });
+  }
+  /* one gauge: its trend and the 1-24 h forecast (also for the gauge's own sheet: dashed line on the hydrograph) */
+  function fcFor(st, all, m, ev, g, now, from) {
+    now = now || Date.now(); from = from || Math.floor(now / HOUR) * HOUR;
+    var tr = R && R.trend ? R.trend(all, st, now, { stepMin: Math.round(stepOf(all) / MIN) || 5, tidal: !!st.tidal }) : null;
+    var week = all.filter(function (p) { return p.t >= now - 7 * DAY && p.v !== null; }).map(function (p) { return p.v; });
+    var z = zoneOf(st), rn = nearest(S.data.rain, st);
+    var rainH = function (h) { return MODELS.map(function (md) { return modelSum(m && m[md.id], z, from, from + h * HOUR); }).filter(function (v) { return v !== null; }); };
+    var fc = tr && R.forecastLevel ? R.forecastLevel(tr, st, { now: now, rainH: rainH, obsToday: rn ? rainSum(rn.st, 24) : null, floor: week.length ? Math.min.apply(null, week) : null,
+      tide: st.tidal ? ev : null, ratio: st.tidal && ev ? R.tideRatio(all, ev, now) : null, project: { glofas: g } }) : null;
+    if (fc) fc.at = now;
+    st.fc = fc;
+    return { st: st, tr: tr, fc: fc };
+  }
+  function drawPredLevels(rows) {
+    var host = $('kmPredLv'); if (!host) return;
+    var rateTxt = function (tr) { var r = tr && num(tr.rate); return r === null ? '' : r > 0.005 ? L('naik {r}/j', { r: f(r) }) : r < -0.005 ? L('turun {r}/j', { r: f(-r) }) : L('stabil'); };
+    var ARW = { up: '↑', down: '↓', flat: '→' };
+    host.innerHTML = '<table class="pd-t"><thead><tr><th>' + esc(L('Stesen')) + '</th><th>' + esc(L('Sekarang')) + '</th>' + PRED_H.map(function (h) { return '<th>' + esc(hLabel(h)) + '</th>'; }).join('') + '<th>' + esc(L('Keyakinan 24 j')) + '</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        var st = r.st, fc = r.fc, cur = num(st.level);
+        var subTxt = (st.tidal ? L('muara · pasang surut') : (st.short.river || '')) + (num(st.alert) !== null ? ' · ' + L('Waspada') + ' ' + f(st.alert) : '');
+        var cells = fc ? fc.steps.map(function (x) {
+          return '<td class="' + LVC[Math.max(0, x.lv)] + '" title="' + esc(L('julat {a} – {b} m', { a: f(x.lo), b: f(x.hi) })) + '"><b>' + f(x.v) + '</b><i>' + (x.lv > 0 ? esc(L(['Normal', 'Waspada', 'Amaran', 'Bahaya'][x.lv])) : ARW[x.dir]) + '</i></td>';
+        }).join('') : PRED_H.map(function () { return '<td class="now"><b>-</b></td>'; }).join('');
+        return '<tr><td class="nm"><button type="button" data-wl="' + esc(st.name) + '">' + esc(st.short.place) + '</button><small>' + esc(subTxt) + '</small></td>' +
+          '<td class="now"><b>' + f(cur) + '</b><i>' + esc(fc && fc.dry ? L('ramalan kering') : rateTxt(r.tr)) + '</i></td>' + cells +
+          '<td class="now"><b>' + (fc && fc.conf !== null ? fc.conf + '%' : '-') + '</b><i>' + esc(fc ? confWord(fc.conf) : '') + '</i></td></tr>';
+      }).join('') + '</tbody></table>';
+    var at = $('kmPredLvAt'); if (at) at.textContent = L('dikira {t} · tekan stesen untuk graf', { t: hm(Date.now()) });
+  }
+  function drawPredFlow(flow) {
+    var host = $('kmPredFlow'); if (!host) return;
+    if (!flow || !flow.med || !flow.now) { host.innerHTML = '<p class="muted">' + esc(L('GloFAS tidak dapat dibaca')) + '</p>'; return; }
+    var probs = (flow.daily || []).map(function (x) { return x.p ? x.p[0] : null; });
+    var tr = R.flowTrend(flow.med, flow.now.v, flow.H && flow.H.t2, null, probs);
+    host.innerHTML = tr.map(function (x) {
+      return '<div class="pd-tc"><span>' + esc(L('{d} hari', { d: x.d })) + '</span><b class="' + x.dir + '">' + ({ up: '↑', down: '↓', flat: '→' })[x.dir] + ' ' + (x.pct > 0 ? '+' : '') + x.pct + '%</b><small>' + esc(x.v + ' m³/s' + (x.of2 !== null ? ' · ' + L('{p}% paras 2 tahun', { p: x.of2 }) : '') + (x.p2 ? ' · ' + L('peluang lepas {p}%', { p: Math.round(x.p2 * 100) }) : '')) + '</small></div>';
+    }).join('') || '<p class="muted">' + esc(L('GloFAS tidak dapat dibaca')) + '</p>';
+  }
+  function drawPredRain(m) {
+    var host = $('kmPredRain'); if (!host) return;
+    if (!m) { host.innerHTML = '<p class="muted">' + esc(L('Ramalan model tidak dapat dibaca')) + '</p>'; return; }
+    var now = Date.now(), per = ZONES.map(function (z, zi) { return R.rainWindows(MODELS.map(function (md) { return m[md.id] ? m[md.id][zi] : null; }), now, RAIN_H); });
+    var RC = ['r0', 'r1', 'r2', 'r3', 'r4'];
+    var cell = function (w, i) { return '<td class="' + (w.cls < 0 ? 'now' : RC[w.cls]) + (i === 5 ? ' sep' : '') + '"><b>' + (w.med === null ? '-' : f(w.med, w.med < 10 ? 1 : 0)) + '</b><i>' + (w.lo === null ? '' : esc(f(w.lo, w.lo < 10 ? 1 : 0) + '–' + f(w.hi, w.hi < 10 ? 1 : 0))) + '</i></td>'; };
+    var nRow = per[0].map(function (w, i) {
+      var miss = MODELS.filter(function (md) { return m[md.id] && R.rainWindows([m[md.id][0]], now, [w.h])[0].n; }).map(function (md) { return md.name.replace(/^(NOAA |DWD |UK )/, ''); });
+      return '<td class="now' + (i === 5 ? ' sep' : '') + '"><b>' + w.n + '</b>' + (w.n && w.n < MODELS.length ? '<i>' + esc(miss.join(', ')) + '</i>' : '') + '</td>';
+    }).join('');
+    host.innerHTML = '<table class="pd-t"><thead><tr><th>' + esc(L('Zon')) + '</th>' + RAIN_H.map(function (h, i) { return '<th' + (i === 5 ? ' class="sep"' : '') + '>' + esc(hLabel(h)) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      per.map(function (ws, zi) { return '<tr><td class="nm">' + esc(L(ZONES[zi].name)) + '</td>' + ws.map(cell).join('') + '</tr>'; }).join('') +
+      '<tr><td class="nm">' + esc(L('Model')) + '<small>' + esc(L('berapa model sampai')) + '</small></td>' + nRow + '</tr></tbody></table>';
+  }
+  function afterPred() {
+    var d = S.data;
+    Promise.all([loadModels(), loadFlow().catch(function () { return null; }), loadTide(),
+      Promise.all(d.water.map(function (st) { return st.gid ? loadFile('wl', st.gid).then(function (j) { return { all: pts(j) }; }, function () { return null; }) : null; }))])
+      .then(function (res) {
+        if (S.tab !== 'pred') return;
+        drawPredLevels(predLevels(res[0], res[2], res[3], res[1]));
+        drawPredFlow(res[1]); drawPredRain(res[0]);
+      });
   }
   function afterWater() {
     var d = S.data, now = Date.now(), t0 = now - DAY;
@@ -912,7 +1018,7 @@
       var m7 = maxIn(all, now - 7 * DAY), b = $('kmMax7'); if (b && m7) b.innerHTML = '<span>' + esc(L('Tertinggi 7 hari')) + '</span><b>' + f(m7.v) + '<small> m</small></b><em>' + esc(dmhm(m7.t)) + '</em>';
       drawHydro(st, rn ? rn.st : null);
     }).catch(function () { st.full = st.list; var b = $('kmMax7'); if (b) b.innerHTML = '<span>' + esc(L('Tertinggi 7 hari')) + '</span><b>-</b><em>' + esc(L('data 30 hari belum ada')) + '</em>'; drawHydro(st, rn ? rn.st : null); });
-    Promise.all([loadModels(), rn ? loadFile('rf', rn.st.gid).catch(function () { return null; }) : null]).then(function (res) { if (S.sel && S.sel.name === name) drawProj(st, res[0], rn ? rn.st : null); });
+    Promise.all([loadModels(), rn ? loadFile('rf', rn.st.gid).catch(function () { return null; }) : null, st.tidal ? loadTide() : null]).then(function (res) { if (S.sel && S.sel.name === name) drawProj(st, res[0], rn ? rn.st : null); });
   }
   function hydroBands(st) {
     return [{ from: null, to: num(st.alert), cls: 'normal' }, { from: num(st.alert), to: num(st.warning), cls: 'alert' }, { from: num(st.warning), to: num(st.danger), cls: 'warning' }, { from: num(st.danger), to: null, cls: 'danger' }];
@@ -926,14 +1032,27 @@
     if (rf) { var acc = {}; rf.forEach(function (p) { if (p.t < t0) return; var k = Math.floor((p.t + 8 * HOUR) / step) * step - 8 * HOUR; acc[k] = (acc[k] || 0) + p.v; }); Object.keys(acc).forEach(function (k) { bars.push({ t: +k, v: acc[k], w: step, cls: 'rain' }); }); }
     else if (rst) (rst.hourly || []).forEach(function (p) { if (p.t >= t0) bars.push({ t: p.t - HOUR / 2, v: p.v, w: HOUR, cls: 'rain' }); });
     var keep = [num(st.alert)]; if (view.length) { var mx = Math.max.apply(null, view.map(function (p) { return p.v; })); if (num(st.warning) !== null && st.warning - mx < 1) keep.push(st.warning); if (num(st.danger) !== null && st.danger - mx < 1) keep.push(st.danger); }
-    chart(host, { t0: t0, t1: end, label: L('Hidrograf'), panels: [
+    /* 1.1.5: the 1-24 h forecast as a dashed line with its range (1 and 3 days views) */
+    var fc = st.fc && S.range <= 3 && view.length ? st.fc : null, t1 = end, fcPts = [], fans = [];
+    if (fc) {
+      var last = view[view.length - 1], base = Math.max(last.t, fc.at ? Math.min(fc.at, last.t + HOUR) : last.t);
+      fcPts = [{ t: last.t, v: last.v }].concat(fc.steps.map(function (x) { return { t: base + x.h * HOUR, v: x.v }; }));
+      fans = [{ pts: [{ t: last.t, lo: last.v, hi: last.v }].concat(fc.steps.map(function (x) { return { t: base + x.h * HOUR, lo: x.lo, hi: x.hi }; })), cls: 'fc' }];
+      t1 = base + DAY; fc.steps.forEach(function (x) { if (x.hi > (keep[1] || -1e9)) keep.push(x.hi); });
+    }
+    chart(host, { t0: t0, t1: t1, label: L('Hidrograf'), panels: [
       { h: 230, auto: true, unit: 'm', keep: keep, minSpan: 0.3, bands: hydroBands(st),
         hl: [{ v: num(st.alert), cls: 'alert', label: L('Waspada') + ' ' + f(st.alert) }, { v: num(st.warning), cls: 'warning', label: L('Amaran') + ' ' + f(st.warning) }, { v: num(st.danger), cls: 'danger', label: L('Bahaya') + ' ' + f(st.danger) }],
-        lines: [{ pts: view, cls: 'wl', area: true, gapMs: gapOf(view) }], marks: view.length ? [{ t: view[view.length - 1].t, v: view[view.length - 1].v, cls: status(st), r: 5 }] : [] },
+        fans: fans, nowT: fc ? view[view.length - 1].t : null,
+        lines: [{ pts: view, cls: 'wl', area: true, gapMs: gapOf(view) }].concat(fc ? [{ pts: fcPts, cls: 'wl fc', dash: true, gapMs: 13 * HOUR }] : []),
+        marks: (view.length ? [{ t: view[view.length - 1].t, v: view[view.length - 1].v, cls: status(st), r: 5 }] : []).concat(fcPts.slice(1).map(function (q) { return { t: q.t, v: q.v, cls: 'fc', r: 3 }; })) },
       { h: 90, auto: true, floor: 0, minSpan: 2, unit: 'mm', bars: bars, lines: [] }],
       tip: function (t) {
         var v = valueAt(view, t), b = bars.filter(function (x) { return t >= x.t && t < x.t + x.w; })[0];
-        return [v === null ? '' : '<i class="dot ' + status(st, v) + '"></i>' + esc(L('Paras')) + ': <b>' + f(v) + ' m</b> · ' + esc(L(LV_NAME[status(st, v)])), b ? '🌧️ ' + esc(L('Hujan')) + ': <b>' + f(b.v, 1) + ' mm</b> / ' + (b.w / HOUR) + ' j' : ''].filter(Boolean);
+        var fv = fc && v === null && t > fcPts[0].t ? valueAt(fcPts, t) : null;
+        return [v === null ? '' : '<i class="dot ' + status(st, v) + '"></i>' + esc(L('Paras')) + ': <b>' + f(v) + ' m</b> · ' + esc(L(LV_NAME[status(st, v)])),
+          fv === null ? '' : '<i class="dot ' + status(st, fv) + '"></i>' + esc(L('Anggaran')) + ': <b>' + f(fv) + ' m</b> · ' + esc(L(LV_NAME[status(st, fv)])),
+          b ? '🌧️ ' + esc(L('Hujan')) + ': <b>' + f(b.v, 1) + ' mm</b> / ' + (b.w / HOUR) + ' j' : ''].filter(Boolean);
       } });
   }
   /* 5-model rain at the gauge's zone + the early-warning projection (same formula as the dashboard) */
@@ -947,6 +1066,9 @@
     var tl = st.full || st.list, tr = R ? R.trend(tl, st, now, { stepMin: Math.round(stepOf(tl) / MIN) || 5, tidal: !!st.tidal }) : null;
     var obsT = rst ? rainSum(rst, 24) : null;
     var pr = tr && R.project ? R.project(tr, st, { rain4: rain4, rain24: rain24, obsToday: obsT }) : null;
+    /* 1.1.5: the 1-24 h forecast on the hydrograph (dashed) */
+    var gq = S.flow && S.flow.H && S.flow.H.t2 && S.flow.med && S.flow.med.length ? Math.max.apply(null, S.flow.med.slice(0, 2).map(function (x) { return x.v; })) / S.flow.H.t2 : null;
+    fcFor(st, tl, m, S.tide && S.tide.events, gq, now); if (S.sel && S.sel.name === st.name) drawHydro(st, rst);
     var maxH = Math.max.apply(null, ok.map(function (x) { return x.h24; }).concat([1]));
     var h = '<div class="km-pgrid"><div><h3>' + esc(L('Hujan 24 jam depan · {z}', { z: L(ZONES[z].name) })) + '</h3>' + (ok.length ? per.map(function (x) {
       return '<div class="km-mrow"><span><i class="sw" style="background:' + MCOL[x.md.id] + '"></i>' + esc(x.md.name) + '</span><span class="bar"><i style="width:' + (x.h24 === null ? 0 : x.h24 / maxH * 100).toFixed(0) + '%;background:' + MCOL[x.md.id] + '"></i></span><b>' + (x.h24 === null ? '-' : f(x.h24, 1)) + '</b><em>' + (x.h4 === null ? '' : esc(L('4 j: {v}', { v: f(x.h4, 1) }))) + '</em></div>';
@@ -1041,8 +1163,8 @@
 
   /* PDF: the browser's print (A4) of what is on screen; the iPad app shell gives its own PDF if it can */
   function printPage() {
-    var title = S.sel ? S.sel.name : DIST ? TT(S.tab) : S.tab === 'rain' ? L('Hujan Kemaman') : S.tab === 'flow' ? L('Aliran Sungai Kemaman (Chukai)') : L('Paras Air Kemaman');
-    var name = NAME + ' ' + (S.sel ? S.sel.name : S.tab === 'rain' ? 'hujan' : S.tab === 'flow' ? 'aliran sungai' : 'paras air') + ' ' + C.dateKey(Date.now());
+    var title = S.sel ? S.sel.name : DIST ? TT(S.tab) : S.tab === 'rain' ? L('Hujan Kemaman') : S.tab === 'flow' ? L('Aliran Sungai Kemaman (Chukai)') : S.tab === 'pred' ? L('Ramalan Kemaman') : L('Paras Air Kemaman');
+    var name = NAME + ' ' + (S.sel ? S.sel.name : S.tab === 'rain' ? 'hujan' : S.tab === 'flow' ? 'aliran sungai' : S.tab === 'pred' ? 'ramalan' : 'paras air') + ' ' + C.dateKey(Date.now());
     try {
       if (root.parent && root.parent !== root && root.parent.MC && root.parent.MC.printHtml) {
         /* inside the app (tab): the app prints it (the iPad app makes its PDF from the app's own page) */
@@ -1062,7 +1184,7 @@
   function saveImage() {
     var svgs = Array.prototype.slice.call(document.querySelectorAll((S.sel ? '#kmSheet' : '#km') + ' svg.kc-svg, ' + (S.sel ? '#kmSheet' : '#km') + ' svg.km-schema'));
     if (!svgs.length) return;
-    var cs = getComputedStyle(document.documentElement), W = Math.max.apply(null, svgs.map(function (s) { return s.getBoundingClientRect().width; })), pad2 = 24, title = (S.sel ? S.sel.name : S.tab === 'rain' ? L('Hujan Kemaman') : S.tab === 'flow' ? L('Aliran Sungai Kemaman (Chukai)') : L('Paras Air Kemaman'));
+    var cs = getComputedStyle(document.documentElement), W = Math.max.apply(null, svgs.map(function (s) { return s.getBoundingClientRect().width; })), pad2 = 24, title = (S.sel ? S.sel.name : S.tab === 'rain' ? L('Hujan Kemaman') : S.tab === 'flow' ? L('Aliran Sungai Kemaman (Chukai)') : S.tab === 'pred' ? L('Ramalan Kemaman') : L('Paras Air Kemaman'));
     var H = svgs.reduce(function (a, s) { return a + s.getBoundingClientRect().height + 12; }, 60);
     var cv = document.createElement('canvas'), k = 2; cv.width = (W + pad2 * 2) * k; cv.height = (H + pad2) * k;
     var g = cv.getContext('2d'); g.scale(k, k); g.fillStyle = cs.getPropertyValue('--surface') || '#0d182c'; g.fillRect(0, 0, W + pad2 * 2, H + pad2);
@@ -1126,7 +1248,7 @@
     var n = $('kmNote'); if (!n) { n = document.createElement('div'); n.id = 'kmNote'; n.className = 'km-note-pop'; n.setAttribute('role', 'status'); document.body.appendChild(n); }
     n.textContent = text; n.hidden = false; clearTimeout(note.t); if (ms) note.t = setTimeout(function () { n.hidden = true; }, ms);
   }
-  root.MCKemaman = { S: S, onLive: function () { if (S.tab === 'flow') return; var y = root.scrollY; render(); if (S.sel) (S.sel.kind === 'wl' ? openWater : openRain)(S.sel.name); root.scrollTo(0, y); }, refresh: refresh, force: force, idx: idx, pct: pct, intensity: intensity, rainBin: rainBin, shortName: shortName, pts: pts, setTab: function (t) { S.tab = t === 'rain' || t === 'flow' ? t : 'water'; closeSheet(); render(); } };
+  root.MCKemaman = { S: S, onLive: function () { if (S.tab === 'flow') return; var y = root.scrollY; render(); if (S.sel) (S.sel.kind === 'wl' ? openWater : openRain)(S.sel.name); root.scrollTo(0, y); }, refresh: refresh, force: force, idx: idx, pct: pct, intensity: intensity, rainBin: rainBin, shortName: shortName, pts: pts, setTab: function (t) { S.tab = t === 'rain' || t === 'flow' || t === 'pred' ? t : 'water'; closeSheet(); render(); } };
   window.addEventListener('message', function (e) { if (e.origin !== location.origin || !e.data) return; if (e.data.kmTab) root.MCKemaman.setTab(e.data.kmTab); if (e.data.kmForce) force(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - S.at > 3 * MIN) refresh(); });
   setInterval(function () { refresh(false); }, 3 * MIN);

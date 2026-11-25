@@ -1,0 +1,28 @@
+Monsoon EYE 1.1.5
+=================
+Ramalan
+
+Kad baru 🔮 Ramalan di Utama
+- Paras sungai: 4 stesen paling hampir Bahaya dalam 24 jam — sekarang → 3 j → 6 j → 24 j, warna ikut tahap JPS, keyakinan.
+- Hujan dijangka di lokasi profil: 3 j, 24 j, 3 hari, 7 hari, 14 hari (nilai tengah 5 model, julat, berapa model).
+- Aliran sungai GloFAS 3 / 7 / 14 hari berbanding hari ini.
+- "Lihat penuh" membuka laman Ramalan Kemaman.
+
+Laman baru "Ramalan Kemaman" (selepas Flood Hub Chukai dalam senarai laman)
+- Ramalan paras sungai 1 / 3 / 6 / 12 / 24 jam untuk 8 stesen, dengan tahap dan keyakinan 24 jam. Tekan stesen untuk graf.
+- 2 – 14 hari: arah aliran sungai GloFAS (↑ / → / ↓, % berbanding hari ini, % paras banjir 2 tahun, peluang lepas).
+- Ramalan hujan 1 j, 3 j, 6 j, 12 j, 24 j, 2 / 3 / 7 / 14 hari ikut 4 zon (Hulu, Tengah, Hilir, Kemasik & Kijal):
+  nilai tengah 5 model + julat; warna ikut kelas hujan JPS (jumlah hingga 24 j, purata sehari selepas itu).
+
+Graf stesen (Water Level, tekan stesen)
+- Paparan 1 / 3 hari: garis putus-putus anggaran 1–24 jam dengan julat (model paling kering – paling basah).
+
+Formula (diluluskan 25 Nov 2026)
+- Hingga 4 j: kadar 1–4 j terakhir × jam. Selepas 4 j: kadar beransur ke trend 24 j; kenaikan selepas 4 j × faktor hujan
+  model dalam tempoh itu (≥ 30 mm × 1, ≥ 5 mm × 0.75, kurang × 0.5).
+- Ramalan kering (model < 5 mm/24 j dan hujan hari ini < 10 mm): tidak naik; turun ikut trend tetapi tidak bawah paras
+  terendah 7 hari.
+- Muara (Geliga, Paya Paman, Yak Yah, Kemasik): sekarang + (pasang surut Cukai pada jam itu − sekarang) × nisbah stesen
+  (julat stesen 24 j / julat pasang surut 24 j) + trend 24 j × jam.
+- Lebih 24 j paras tidak dianggar (terlalu tak pasti) — hanya arah aliran GloFAS.
+- 5 model kini dibaca 15–16 hari ke depan (dulu 2 / 14 hari); bilangan panggilan Open-Meteo sama.

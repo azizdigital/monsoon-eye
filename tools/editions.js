@@ -5,7 +5,7 @@ module.exports = {
     "id": "monsoon-eye",
     "short": "me",
     "kind": "land",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "pc": {
       "port": 30050,
       "appId": "local.monsooneye.aziz",
@@ -32,6 +32,7 @@ module.exports = {
       "waterlevel",
       "rainfall",
       "floodhub",
+      "ramalan",
       "infobanjir",
       "jpsaras",
       "jpspeta",
